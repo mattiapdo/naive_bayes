@@ -90,6 +90,18 @@ p
 Split ds.small in ds.train and ds.test containing 70% and 30% of the original dataset respectively
 
 ```{r}
-ds.train = 
+## take 70% of the data for the train set
+sample_size =floor(0.70 * nrow(ds.small))
+
+## set the seed to make the partition reproducible
+set.seed(123)
+#Mix the indices
+intrain=sample(seq_len(nrow(ds.small)), size = sample_size)
+#Derive the sets!
+train = ds.small[intrain, ]
+test  = ds.small[-intrain, ]
+
+# te amo
+ 
 ```
 
