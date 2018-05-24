@@ -7,5 +7,89 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+#rm(list = ls())
+```
+
+### Load Data and Look at Them
+
+We will perform analysis on data from sensors placed as 5 different units on the body 
+
+(*T* Torso, 
+*RA* Rigth Arm,
+*LA* Left Arm,
+*RL* Right Leg,
+*LL* Left Leg) 
+
+of a person, while he was performing several activities.
+
+```{r}
+load(file = 'daily-sport.RData')
+```
+
+The activities are: 'walking', 'stepper', 'crosstr' and 'jumping', and there are 7500 observations for each class...
+
+```{r}
+table(dailysport$id)
+```
+
+Each sensor measure a specific quantity in the tree dimesional space, in particular:
+
+- acceleration (x,y,z)
+
+- radial acceleration (x,y,z)
+
+- magnetic field (x,y,z)
+
+Each feature is numerical, and there are no NAs:
+
+```{r}
+str(dailysport)
+```
+
+```{r}
+cat('NAs:',sum(is.na(dailysport)))
+```
+
+Let's reduce the dataset to two activities and drop the unused levels ('jumping' and 'walking').
+
+This dataset is called 'ds.small', and contains just 3 sensors on one location
+ 
+```{r}
+? subset
+```
+
+ 
+```{r}
+ds.small = subset(x = dailysport, subset = id == "crosstr" | id == "stepper", select = c("id","RL-xMag","RL-yMag","RL-zMag"))
+table(ds.small$id)
+
+# drop unused levels:
+ds.small = droplevels(ds.small)
+table(ds.small$id)
+
+colnames(ds.small) = c("id", "RLxMag", "RLyMag", "RLzMag")
+str(ds.small)
+```
+
+```{r, echo = F, eval = F}
+library(plotly)
+```
+
+Plot 500 points in ds.small choosen at random, treating them as 3-dimensional data points
+
+```{r}
+p <- plot_ly(ds.small[sample(x = 1:nrow(ds.small), size = 500, replace = F) ,], 
+             x = ~RLxMag, y = ~RLyMag, z = ~RLzMag, color = ~id, colors = c('lightpink', 'magenta')) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'RL-xMag'),
+                     yaxis = list(title = 'RL-yMag'),
+                     zaxis = list(title = 'RL-xMag')))
+p
+```
+
+Split ds.small in ds.train and ds.test containing 70% and 30% of the original dataset respectively
+
+```{r}
+ds.train = 
 ```
 
