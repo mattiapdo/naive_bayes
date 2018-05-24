@@ -135,7 +135,6 @@ new_cross = subset(new.cross,select = c("id","RLxMag","RLyMag","RLzMag"))
 #Final
 
 final = full_join(new_step,new_cross)
-final
 
 lda.out <- lda(formula = id ~ ., 
          data = final, 
