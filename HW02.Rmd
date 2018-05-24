@@ -55,11 +55,6 @@ Let's reduce the dataset to two activities and drop the unused levels ('jumping'
 This dataset is called 'ds.small', and contains just 3 sensors on one location
  
 ```{r}
-? subset
-```
-
- 
-```{r}
 ds.small = subset(x = dailysport, subset = id == "crosstr" | id == "stepper", select = c("id","RL-xMag","RL-yMag","RL-zMag"))
 table(ds.small$id)
 
@@ -71,7 +66,7 @@ colnames(ds.small) = c("id", "RLxMag", "RLyMag", "RLzMag")
 str(ds.small)
 ```
 
-```{r, echo = F, eval = F}
+```{r, echo = T, eval = T}
 library(plotly)
 ```
 
@@ -79,7 +74,7 @@ Plot 500 points in ds.small choosen at random, treating them as 3-dimensional da
 
 ```{r}
 p <- plot_ly(ds.small[sample(x = 1:nrow(ds.small), size = 500, replace = F) ,], 
-             x = ~RLxMag, y = ~RLyMag, z = ~RLzMag, color = ~id, colors = c('lightpink', 'magenta')) %>%
+             x = ~RLxMag, y = ~RLyMag, z = ~RLzMag, color = ~id, colors = c('lightcoral', 'lightskyblue3')) %>%
   add_markers() %>%
   layout(scene = list(xaxis = list(title = 'RL-xMag'),
                      yaxis = list(title = 'RL-yMag'),
@@ -89,7 +84,76 @@ p
 
 Split ds.small in ds.train and ds.test containing 70% and 30% of the original dataset respectively
 
+```{r, eval=T}
+library(caret)
+```
+
 ```{r}
-ds.train = 
+partition = createDataPartition(y = ds.small$id, times = 1, p = 0.7, list = F)
+ds.train = ds.small[partition,]
+ds.test = ds.small[-partition,]
+cat(paste('nrow(ds.train) + nrow(ds.test):', nrow(ds.train) + nrow(ds.test), '\nnrow(ds.small):', nrow(ds.small)))
+```
+
+## Use the function lda() in the MASS package on ds.train to estimate a linear discriminant analysis model
+
+```{r}
+library(MASS) # for lda()
+library(vegan) # for decostand()
+library(dplyr)
+```
+
+```{r}
+
+stepper = subset(ds.train,subset = id =="stepper")
+cross =  subset(ds.train,subset = id =="crosstr")
+#summary(stepper)
+#hist(stepper$RLxMag)
+
+num_attr = c("RLxMag", "RLyMag", "RLzMag")
+num_var_st = stepper[,num_attr]
+num_var_cr = cross[,num_attr]
+
+#Standardize concerning the stepper
+num_stand_step = decostand(num_var_st, "standardize")
+colnames(num_stand_step) =  c("RLxMag", "RLyMag", "RLzMag")
+#hist(num_stand_step$RLxMag)
+
+#Standardize concerning the crosstr
+num_stand_cross = decostand(num_var_cr, "standardize")
+colnames(num_stand_cross) =  c("RLxMag", "RLyMag", "RLzMag")
+#hist(num_stand_cross$RLyMag)
+
+#Reobtain the data but now transformed
+#for step
+new.step=cbind(stepper,num_stand_step)
+new_step = subset(new.step,select = c("id","RLxMag","RLyMag","RLzMag"))
+#for cross
+new.cross=cbind(cross,num_stand_cross)
+new_cross = subset(new.cross,select = c("id","RLxMag","RLyMag","RLzMag"))
+
+#Final
+
+final = full_join(new_step,new_cross)
+final
+
+lda.out <- lda(formula = id ~ ., 
+         data = final, 
+         prior = c(1,1)/2)
+lda.out
+```
+
+## Predict the class-labels on the training set
+
+```{r}
+pred.tr = predict(object = lda.out, ds.train)
+table(predict = pred.tr$class, true  = ds.train$id)
+```
+
+## Predict the class-labels on the test set
+
+```{r}
+pred.te = predict(object = lda.out, ds.test)
+table(predict = pred.te$class, true  = ds.test$id)
 ```
 
