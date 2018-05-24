@@ -98,8 +98,8 @@ set.seed(123)
 #Mix the indices
 intrain=sample(seq_len(nrow(ds.small)), size = sample_size)
 #Derive the sets!
-train = ds.small[intrain, ]
-test  = ds.small[-intrain, ]
+ds.train = ds.small[intrain, ]
+ds.test  = ds.small[-intrain, ]
 
 # te amo
  
