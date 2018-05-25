@@ -154,6 +154,22 @@ table(plda.test)
 #Initial values
 table(plda.train)
 
+
+
+
+
+
+#See the posterior probabilities calculated by LDA
+
+r2 <- lda(formula = id ~ ., 
+          data = ds.train, 
+          prior = c(1,1)/2,
+          CV = TRUE)
+
+head(r2$class)
+head(r2$posterior, 3)
+
+
 ```
 
 Comme te non c'e nessuno!
