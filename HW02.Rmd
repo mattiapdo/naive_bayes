@@ -88,20 +88,73 @@ p
 ```
 
 Split ds.small in ds.train and ds.test containing 70% and 30% of the original dataset respectively
+#Before splitting we standardize
 
 ```{r}
-## take 70% of the data for the train set
+
+library(MASS)
+library(vegan)
+
+#Standardize 'em all  before splitting the dataset
+num_attr = c("RLxMag", "RLyMag", "RLzMag")
+num_var = ds.small[,num_attr]
+num_stand = decostand(num_var, "standardize")
+sel = subset(ds.small,subset = id == "crosstr" | id == "stepper",select = c("id"))
+#The train data set normalized
+ds.stand = cbind(sel,num_stand)
+
+ 
+```
+Now we can split!
+
+
+
+```{r}
+## 70% of the sample size
 sample_size =floor(0.70 * nrow(ds.small))
 
 ## set the seed to make the partition reproducible
 set.seed(123)
 #Mix the indices
-intrain=sample(seq_len(nrow(ds.small)), size = sample_size)
+intrain=sample(seq_len(nrow(ds.stand)), size = sample_size)
 #Derive the sets!
-ds.train = ds.small[intrain, ]
-ds.test  = ds.small[-intrain, ]
-
-# te amo
- 
+ds.train = ds.stand[intrain, ]
+ds.test  = ds.stand[-intrain, ]
 ```
+
+Perform LDA
+
+
+```{r}
+#Perform the LDA on data on the final dataset we created
+r <- lda(formula = id ~ ., 
+         data = ds.train, 
+         prior = c(1,1)/2)
+#Predictions for the train (final) and the test dataset
+
+plda.test = predict(object = r, # predictions
+               newdata = ds.test)$class
+
+
+plda.train = predict(object = r, # predictions
+                    newdata = ds.train)$class
+
+#accuracy on training data
+mean(plda.train == ds.train$id)
+
+
+#accuracy on test data
+mean(plda.test == ds.test$id)
+
+
+#Classifier prediction
+table(plda.test)
+
+
+#Initial values
+table(plda.train)
+
+```
+
+
 
