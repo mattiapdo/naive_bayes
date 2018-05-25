@@ -88,7 +88,7 @@ p
 ```
 
 Split ds.small in ds.train and ds.test containing 70% and 30% of the original dataset respectively
-#Before splitting we standardize
+Before splitting we standardize
 
 ```{r}
 
@@ -126,11 +126,11 @@ Perform LDA
 
 
 ```{r}
-#Perform the LDA on data on the final dataset we created
+#Perform the LDA on data on the train dataset we created
 r <- lda(formula = id ~ ., 
          data = ds.train, 
          prior = c(1,1)/2)
-#Predictions for the train (final) and the test dataset
+#Predictions for the train  and the test dataset
 
 plda.test = predict(object = r, # predictions
                newdata = ds.test)$class
