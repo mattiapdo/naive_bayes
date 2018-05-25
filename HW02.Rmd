@@ -100,7 +100,7 @@ num_attr = c("RLxMag", "RLyMag", "RLzMag")
 num_var = ds.small[,num_attr]
 num_stand = decostand(num_var, "standardize")
 sel = subset(ds.small,subset = id == "crosstr" | id == "stepper",select = c("id"))
-#The train data set normalized
+#The data set normalized
 ds.stand = cbind(sel,num_stand)
 
  
