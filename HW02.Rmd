@@ -105,7 +105,7 @@ library(vegan) # for decostand()
 library(dplyr)
 ```
 
-```{r, eval = F, echo = F}
+```{r, eval = T, echo = T}
 
 stepper = subset(ds.train,subset = id =="stepper")
 cross =  subset(ds.train,subset = id =="crosstr")
@@ -184,9 +184,20 @@ na.bay$apriori
 ```{r}
 names(na.bay$tables)
 na.bay$tables$RLxMag
+na.bay$tables$RLyMag
+na.bay$tables$RLzMag
 ```
+
+## Predict the class-labels on the train set
 
 ```{r}
-na.bay$levels
+pred.tr = predict(object = na.bay, ds.train)
+table(predict = pred.tr, true  = ds.train$id)
 ```
 
+## Predict the class-labels on the test set
+
+```{r}
+pred.te = predict(object = na.bay, ds.test)
+table(predict = pred.te, true  = ds.test$id)
+```
