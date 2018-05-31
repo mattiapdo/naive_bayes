@@ -201,3 +201,90 @@ table(predict = pred.tr, true  = ds.train$id)
 pred.te = predict(object = na.bay, ds.test)
 table(predict = pred.te, true  = ds.test$id)
 ```
+
+## Estimate the 1-dimensional class-conditional densities of each of the three covariates using histograms or kernels and build 95% bootstrap confidence bands around them
+
+```{r}
+head(ds.small)
+nrow(ds.small)
+```
+
+```{r}
+# install.packages("kedd")
+library(kedd) # h.amise
+attach(ds.small)
+```
+
+Find the optimal bandwidth for the kernel estimations of the class conditional probability density functions $p_{stepper}(x) \quad p_{crosstr}(x)$
+
+```{r}
+amise_cr_RLxMag = h.amise(ds.small$RLxMag[ds.small$id == "crosstr"])
+amise_st_RLxMag = h.amise(ds.small$RLxMag[ds.small$id == "stepper"])
+amise_cr_RLyMag = h.amise(ds.small$RLyMag[ds.small$id == "crosstr"])
+amise_st_RLyMag = h.amise(ds.small$RLyMag[ds.small$id == "stepper"])
+amise_cr_RLzMag = h.amise(ds.small$RLzMag[ds.small$id == "crosstr"])
+amise_st_RLzMag = h.amise(ds.small$RLzMag[ds.small$id == "stepper"])
+
+h_cr_RLxMag = amise_cr_RLxMag$h 
+h_st_RLxMag = amise_st_RLxMag$h
+h_cr_RLyMag = amise_cr_RLyMag$h 
+h_st_RLyMag = amise_st_RLyMag$h
+h_cr_RLzMag = amise_cr_RLzMag$h 
+h_st_RLzMag = amise_st_RLzMag$h
+```
+
+```{r}
+densities = list(
+p_cr_RLxMag = density(ds.small$RLxMag[ds.small$id == "crosstr"], bw = h_cr_RLxMag),
+p_st_RLxMag = density(ds.small$RLxMag[ds.small$id == "stepper"], bw = h_st_RLxMag),
+p_cr_RLyMag = density(ds.small$RLyMag[ds.small$id == "crosstr"], bw = h_cr_RLyMag),
+p_st_RLyMag = density(ds.small$RLyMag[ds.small$id == "stepper"], bw = h_st_RLyMag),
+p_cr_RLzMag = density(ds.small$RLzMag[ds.small$id == "crosstr"], bw = h_cr_RLzMag),
+p_st_RLzMag = density(ds.small$RLzMag[ds.small$id == "stepper"], bw = h_st_RLzMag)
+)
+```
+
+
+```{r}
+plot(densities[[1]] , main = "",
+     xlim = c(min(ds.small$RLxMag),max(ds.small$RLxMag)),
+     ylim = c(0,10), 
+     xlab = "RLxMag",
+     col = "lightblue3", lwd = 3)
+
+lines(densities[[2]] , col = "lightcoral", lwd = 3)
+
+legend("topright", c("stepper", "crosstr"), col = c("lightcoral", "lightblue3"),
+       text.col = "green4", lwd = c(3, 3))
+```
+```{r}
+plot(densities[[3]] , main = "",
+     xlim = c(min(ds.small$RLyMag),max(ds.small$RLyMag)),
+     ylim = c(0,5), 
+     xlab = "RLyMag",
+     col = "lightblue3", lwd = 3)
+
+lines(densities[[4]] , col = "lightcoral", lwd = 3)
+
+legend("topright", c("stepper", "crosstr"), col = c("lightcoral", "lightblue3"),
+       text.col = "green4", lwd = c(3, 3))
+
+```
+```{r}
+par(mfrow = c(1,1))
+
+plot(densities[[5]] , main = "",
+     xlim = c(min(ds.small$RLzMag),max(ds.small$RLzMag)),
+     ylim = c(0,20), 
+     xlab = "RLzMag",
+     col = "lightblue3", lwd = 3)
+
+lines(densities[[6]] , col = "lightcoral", lwd = 3)
+
+legend("topleft", c("stepper", "crosstr"), col = c("lightcoral", "lightblue3"),
+       text.col = "green4", lwd = c(3, 3))
+
+```
+
+
+
