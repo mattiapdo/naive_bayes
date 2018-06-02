@@ -126,34 +126,39 @@ Perform LDA
 
 
 ```{r}
-#Perform the LDA on data on the train dataset we created
-r <- lda(formula = id ~ ., 
+#Perform the LDA on data on the final dataset we created
+lda.out <- lda(formula = id ~ ., 
          data = ds.train, 
          prior = c(1,1)/2)
-#Predictions for the train  and the test dataset
+#Predictions for the train (final) and the test dataset
 
-plda.test = predict(object = r, # predictions
+pred.test = predict(object = lda.out, # predictions
                newdata = ds.test)$class
 
 
-plda.train = predict(object = r, # predictions
+pred.train = predict(object = lda.out, # predictions
                     newdata = ds.train)$class
 
 #accuracy on training data
-mean(plda.train == ds.train$id)
+mean(pred.train == ds.train$id)
 
 
 #accuracy on test data
-mean(plda.test == ds.test$id)
+mean(pred.test == ds.test$id)
 
 
 #Classifier prediction
-table(plda.test)
+table(pred.test)
 
 
 #Initial values
-table(plda.train)
+table(pred.train)
 
+
+
+#head(plda$class) # classification result
+#head(plda$posterior, 3) # posterior prob.
+#head(plda$x, 3) # LD projections
 
 
 
@@ -168,6 +173,7 @@ r2 <- lda(formula = id ~ .,
 
 head(r2$class)
 head(r2$posterior, 3)
+
 
 
 ```
