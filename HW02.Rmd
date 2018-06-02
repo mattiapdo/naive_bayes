@@ -196,8 +196,8 @@ scatterplot3d(ds.train[,2:4],
               xlab = "RLxMag",
               ylab = "RLyMag",
               zlab = "RLzMag",color=colors)
-sc <- scatterplot3d(ds.train[,2:4], pch = 16, color=colors)
-legend(sc$xyz.convert(2, 2, 0), legend = levels(ds.train$id),
+#sc <- scatterplot3d(ds.train[,2:4], pch = 16, color=colors)
+legend("right", legend = levels(ds.train$id),
        col =  c("#999999", "#E69F00"), pch = 16)
 
 
