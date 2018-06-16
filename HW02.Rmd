@@ -1,13 +1,12 @@
 ---
 title: "Homework 2"
-author: "Mattia Podio"
+author: "Mattia Podio, Konstantine Christodoulou Sioumalas, Andrea Di Luca"
 date: "24 maggio 2018"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#rm(list = ls())
 ```
 
 ### Load Data and Look at Them
@@ -22,13 +21,10 @@ We will perform analysis on data from sensors placed as 5 different units on the
 
 of a person, while he was performing several activities.
 
-```{r}
-load(file = 'daily-sport.RData')
-```
-
 The activities are: 'walking', 'stepper', 'crosstr' and 'jumping', and there are 7500 observations for each class...
 
 ```{r}
+load(file = 'daily-sport.RData')
 table(dailysport$id)
 ```
 
@@ -44,10 +40,6 @@ Each feature is numerical, and there are no NAs:
 
 ```{r}
 str(dailysport)
-```
-
-```{r}
-cat('NAs:',sum(is.na(dailysport)))
 ```
 
 Let's reduce the dataset to two activities and drop the unused levels ('jumping' and 'walking').
@@ -66,7 +58,7 @@ colnames(ds.small) = c("id", "RLxMag", "RLyMag", "RLzMag")
 str(ds.small)
 ```
 
-```{r, echo = T, eval = T}
+```{r, message=F}
 library(plotly)
 ```
 
@@ -78,7 +70,7 @@ p <- plot_ly(ds.small[sample(x = 1:nrow(ds.small), size = 500, replace = F) ,],
   add_markers() %>%
   layout(scene = list(xaxis = list(title = 'RL-xMag'),
                      yaxis = list(title = 'RL-yMag'),
-                     zaxis = list(title = 'RL-xMag')))
+                     zaxis = list(title = 'RL-zMag')))
 p
 ```
 
@@ -86,27 +78,27 @@ p
 
 Split ds.small in ds.train and ds.test containing 70% and 30% of the original dataset respectively
 
-```{r, eval=T}
+```{r, message=F}
 library(caret)
 ```
+
+Let's use at this purpose the function createDataPartition() from caret package.
 
 ```{r}
 partition = createDataPartition(y = ds.small$id, times = 1, p = 0.7, list = F)
 ds.train = ds.small[partition,]
 ds.test = ds.small[-partition,]
-cat(paste('nrow(ds.train) + nrow(ds.test):', nrow(ds.train) + nrow(ds.test), '\nnrow(ds.small):', nrow(ds.small)))
 ```
 
 ## Use the function lda() in the MASS package on ds.train to estimate a linear discriminant analysis model
 
-```{r}
+```{r, message= F}
 library(MASS) # for lda()
 library(vegan) # for decostand()
 library(dplyr)
 ```
 
-```{r, eval = T, echo = T}
-
+```{r}
 stepper = subset(ds.train,subset = id =="stepper")
 cross =  subset(ds.train,subset = id =="crosstr")
 #summary(stepper)
@@ -138,9 +130,9 @@ new_cross = subset(new.cross,select = c("id","RLxMag","RLyMag","RLzMag"))
 
 final = full_join(new_step,new_cross)
 
-lda.out <- lda(formula = id ~ ., 
-         data = final, 
-         prior = c(1,1)/2)
+lda.out <- lda( formula = id ~ ., 
+                data = final, 
+                prior = c(1,1)/2)
 lda.out
 ```
 
@@ -160,32 +152,14 @@ table(predict = pred.te$class, true  = ds.test$id)
 
 ## Repeat everything using the function naivebayes() in the package e1071
 
-```{r}
-#library(e1071)
-? naiveBayes()
+```{r, message= F}
+library(e1071)
 ```
 
 Build the model
 
 ```{r}
 na.bay = naiveBayes(id~., data = ds.train)
-```
-
-```{r}
-names(na.bay)
-```
-
-"apriori" is the class distribution for the dependent variable
-
-```{r}
-na.bay$apriori
-```
-
-```{r}
-names(na.bay$tables)
-na.bay$tables$RLxMag
-na.bay$tables$RLyMag
-na.bay$tables$RLzMag
 ```
 
 ## Predict the class-labels on the train set
@@ -195,6 +169,7 @@ pred.tr = predict(object = na.bay, ds.train)
 table(predict = pred.tr, true  = ds.train$id)
 ```
 
+
 ## Predict the class-labels on the test set
 
 ```{r}
@@ -202,15 +177,10 @@ pred.te = predict(object = na.bay, ds.test)
 table(predict = pred.te, true  = ds.test$id)
 ```
 
+
 ## Estimate the 1-dimensional class-conditional densities of each of the three covariates using histograms or kernels and build 95% bootstrap confidence bands around them
 
-```{r}
-head(ds.small)
-nrow(ds.small)
-```
-
-```{r}
-# install.packages("kedd")
+```{r, message=FALSE}
 library(kedd) # h.amise
 attach(ds.small)
 ```
@@ -246,8 +216,8 @@ p_st_RLzMag = density(ds.small$RLzMag[ds.small$id == "stepper"], bw = h_st_RLzMa
 )
 ```
 
-
 ```{r}
+par(mfrow = c(3,1))
 plot(densities[[1]] , main = "",
      xlim = c(min(ds.small$RLxMag),max(ds.small$RLxMag)),
      ylim = c(0,10), 
@@ -258,8 +228,7 @@ lines(densities[[2]] , col = "lightcoral", lwd = 3)
 
 legend("topright", c("stepper", "crosstr"), col = c("lightcoral", "lightblue3"),
        text.col = "green4", lwd = c(3, 3))
-```
-```{r}
+
 plot(densities[[3]] , main = "",
      xlim = c(min(ds.small$RLyMag),max(ds.small$RLyMag)),
      ylim = c(0,5), 
@@ -271,8 +240,6 @@ lines(densities[[4]] , col = "lightcoral", lwd = 3)
 legend("topright", c("stepper", "crosstr"), col = c("lightcoral", "lightblue3"),
        text.col = "green4", lwd = c(3, 3))
 
-```
-```{r}
 plot(densities[[5]] , main = "",
      xlim = c(min(ds.small$RLzMag),max(ds.small$RLzMag)),
      ylim = c(0,20), 
@@ -283,7 +250,46 @@ lines(densities[[6]] , col = "lightcoral", lwd = 3)
 
 legend("topleft", c("stepper", "crosstr"), col = c("lightcoral", "lightblue3"),
        text.col = "green4", lwd = c(3, 3))
+```
 
+### Bootstrap Confidence Bands
+
+Here is the function to perform bootstrap in order to get confidence band for the density estimate.
+
+```{r}
+kern.bootstrap = function(data, B, h, alpha){
+  n = length(data)
+  samples = rep(NA,B)
+  true.dens = density(x = data, bw = h)
+  for (b in 1:B){
+    indexes = sample(x = 1:length(data), size = n, replace = T)
+    boot.sample = data[indexes]
+    boot.dens = density(x = boot.sample, bw = h)
+    boot.stat = sqrt(n*h)*max(abs(true.dens$y-boot.dens$y))
+    samples[b] = boot.stat 
+  }
+  q = quantile(x = samples, probs = alpha)
+  print(q)
+  zero = rep(0, length(true.dens))
+  return(list("x" = true.dens$x, 
+              "p.hat" = true.dens$y, 
+              "lo" =ifelse(zero>(true.dens$y - q /sqrt(n*h)),zero, true.dens$y - q /sqrt(n*h)),
+              "up" = true.dens$y + q/sqrt(n*h)))
+}
+```
+
+```{r}
+out = kern.bootstrap(data = ds.small$RLxMag[ds.small$id == "crosstr"], B = 100, h = h_cr_RLxMag, alpha = 0.90)
+plot(out$x, out$up, type = "l", col = "green", ylim = c(0,5.5))
+points(out$x, out$p.hat, type = "l", col = "black", lwd = 2)
+points(out$x, out$lo, type = "l", col = "red")
+str(out)
+
+out = kern.bootstrap(data = ds.small$RLxMag[ds.small$id == "crosstr"], B = 100, h = h_cr_RLxMag, alpha = 0.10)
+plot(out$x, out$up, type = "l", col = "green", ylim = c(0,5.5))
+points(out$x, out$p.hat, type = "l", col = "black", lwd = 2)
+points(out$x, out$lo, type = "l", col = "red")
+str(out)
 ```
 
 ### We implement our own version of the *naive bayes classifier*
@@ -292,9 +298,281 @@ $p_{crosstr}(\vec{x}) = \prod_{j=1}^3 p_{crosstr}(x_j)$
 $p_{stepper}(\vec{x}) = \prod_{j=1}^3 p_{stepper}(x_j)$
 
 ```{r}
-naive_joint_cond = function(x,y,x){
-  return()
+joint = function(x, den, i){
+  # this function computes the joint probability density function
+  # assuming independance above the variables. In other words,
+  # it is assumed that the joint pdf factorizes into the product
+  # of the one dimensional pdfs.
+  
+  # x is a vector
+  # den is a list of functions - the 1-d density functions
+  # i is an additional integer parameter: is the index of the 
+  # class variable to be dropped
+  
+  
+  x = x[-i]
+  # init a vector that will contain the values of the 1d pdfs
+  joint = rep(0, ncol(x))
+  # for each feature in the vector, store the 1d pdf
+  for(j in 1:ncol(x)){
+    joint[j] = apply(x[j],1, den[[j]])
+  }
+  # return the product of the pdfs
+  return(prod(joint))
 }
+
+# The r function computes the regression function
+r = function(l1, l2, p1, p2) return(p1*l1/(p1*l1+p2*l2))
+
+
+na.bay = function(test, train, i){
+  # This function solves the binary classification using naive bayes algorithm
+  # test is a dataframe with the new observations
+  # data is the training set
+  # i is the index of the label column in the training set
+  
+  # save the column with the true classes in the train set
+  trueclass = train[i]
+  
+  # split the train set into two subsest according the class
+  # the data belong to
+  X <- split(train, train[i])
+  
+  # save the names of the two classes
+  a = as.character(unique(X[[1]][,i]))
+  b = as.character(unique(X[[2]][,i]))
+  
+  # compute the empirical probability density functions for the
+  # two classes
+  pi1 = nrow(X[[1]])/nrow(train)
+  pi2 = nrow(X[[2]])/nrow(train)
+  # estimate the conditional density functions and interpolate
+  # them in order to evaluate them for new datapoints
+  den1<-apply(X[[1]][,-i], 2, density)
+  den2<-apply(X[[2]][,-i], 2, density)
+  den1 = lapply(den1, approxfun, rule = 2)
+  den2 = lapply(den2, approxfun, rule = 2)
+  
+  # split the test set into a list containig each separate rows
+  # this step is necessary to use the lapply function
+  list <- split(test, seq(nrow(test)))
+  # for each item (datapoint) in the list, compute the joint
+  # conditional probability density functions using the 
+  # Naive Bayes rule.
+  # ...see joint() function for more details
+  f1 = unlist(lapply(list, joint, den1, i))
+  f2 = unlist(lapply(list, joint, den2, i))
+  
+  # evaluate the regression statistic
+  r = r(f1, f2, pi1, pi2)
+
+  # for each row in the test set, use the value of the regression
+  # function to establish to which class the datapoint belongs to
+  Prediction = rep(NA, nrow(test))
+  for (i in 1:nrow(test)){
+    if(r[i]>1/2) {
+      Prediction[i] <- a
+      }
+    else {
+      Prediction[i] <- b
+    }
+  }
+  return(factor(Prediction))
+}
+
+```
+
+Toy example to - comparing performances.
+
+```{r}
+dataA = data.frame(x = rnorm(1000, -2, 1.5), y = rnorm(1000, 2, 1.5), class = "classA")
+dataB = data.frame(x = rnorm(1000, 2, 1.5), y = rnorm(1000, -2, 1.5), class = "classB")
+data = rbind(dataB, dataA)
+plot(data$x, data$y, col = data$class, pch = 19, xlab = "x", ylab = "y", 
+     main = "Scatterplot x vs y")
+
+# Split Train set and Test set
+intr = createDataPartition(data$class, p = 0.7, list = F)
+train = data[intr,]
+test = data[-intr,]
+
+cat("- Using our function na.bay()...\n")
+time = Sys.time()
+predictions = na.bay(test = test, train = train, i = 3)
+cat("\nAccuracy = ", round(sum(predictions == test$class)/length(predictions),4) ,"\n")
+print(table(test$class, predictions, dnn = c("True", "Predicted")))
+cat(paste("Elapsed time = ", round(Sys.time()-time, 5), "s\n"))
+
+cat("\n-Using the function naiveBayes() from e1071...\n")
+time = Sys.time()
+model = naiveBayes(class~., data = train)
+pred.tr = predict(object = model, newdata = test)
+table = table(test$class, pred.tr, dnn = c("True", "Predicted"))
+cat(paste("\nAccuracy = ", round(sum(diag(table))/sum(table), 4)),"\n")
+print(table)
+cat(paste("Elapsed time = ", round(Sys.time()-time, 5), "s\n"))
+```
+
+In terms of accuracy the classifiers are similar, while our implementation takes twice the time of the naiveBayes() function.
+
+## Other stuff
+
+Identifying Correlated Predictors and remove them
+
+```{r}
+colnames(dailysport)
+predictors = subset(dailysport, select = -id)
+# ncol(predictors)
+# highlyCorDescr <- findCorrelation(cor(predictors), cutoff = .75)
+# predictors <- predictors[,-highlyCorDescr]
+# ncol(predictors)
+# cor <- cor(predictors)
+# summary(cor[upper.tri(cor)])
+data = cbind(id = dailysport$id, predictors) 
+```
+
+### Linear Support Vector Machine
+
+```{r}
+inTrain = createDataPartition(y = data$id, p = 0.7, list = FALSE)
+
+train = data[inTrain,]; cat("nrow train", nrow(train), "\n")
+test = data[-inTrain,]; cat("nrow test", nrow(test), "\n")
+
+```
+
+```{r, echo = F, eval = F}
+scale = preProcess(x = train)
+train = predict(scale, train)
+
+# Torso
+featurePlot(x = train[,2:10],
+            y= train$id,
+            plot = "box",
+            layout = c(3,3),
+            scales = list(y = list(relation = "free"),
+                          x = list(rot = 90))
+            )
+# R Arm
+featurePlot(x = train[,11:19],
+            y = train$id,
+            plot = "box",
+            layout = c(3,3),
+            scales = list(y = list(relation = "free"),
+                          x = list(rot = 90))
+            
+            )
+
+# L Arm
+featurePlot(x = train[,20:28],
+            y = train$id,
+            plot = "box",
+            layout = c(3,3),
+            scales = list(x = list(rot = 90),
+                          y = list(relation = "free"))
+            )
+
+#R Leg 
+featurePlot(x = train[,29:37],
+            y = train$id,
+            plot = "box",
+            scales = list(x = list(rot = 90),
+                          y = list(relation = "free")),
+            layout = c(3,3)
+            )
+
+# L Leg 
+featurePlot(x = train[,38:46],
+            y = train$id,
+            plot = "box",
+            scales = list(x = list(rot = 90),
+                          y = list(relation = "free")),
+            layout = c(3,3)
+            )
+```
+
+```{r}
+# Feature Importance Recursive Feature Elimination
+
+subsets = 1:5
+ctrl = rfeControl(functions = rfFuncs,
+                  method = "cv",
+                  number = 3,
+                  verbose = T
+                  )
+lmProfile = rfe(x = train[,2:10],
+                y = train$id,
+                sizes = subsets,
+                rfeControl = ctrl
+                )
+lmProfile
+
+lmProfile$fit
+```
+
+
+```{r}
+# Control the training with 3 fold cross validation
+ctrl = trainControl(method = "cv", 
+                    number = 3,
+                    verboseIter = T)
+
+grid = expand.grid(C = c(1,2,3,4))
+svm_Linear = train(x = train[,2:10],
+                   y = train$id,
+                   method = "svmLinear",
+                   trControl = ctrl,
+                   tuneGrid = grid
+                   )
+svm_Linear
+```
+
+```{r}
+inTrain = createDataPartition(y = data$id, p = 0.7, list = FALSE)
+
+train = data[inTrain,]; cat("nrow train", nrow(train), "\n")
+test = data[-inTrain,]; cat("nrow test", nrow(test), "\n")
+
+# Control the training with 3 fold cross validation
+trctrl = trainControl(method = "none", number = 3)
+? train
+grid = expand.grid(C= seq(0.1, 1, 0.1))
+LDA = train(id ~., data = train, method = "lda",
+                   trControl = trctrl,
+                   #tuneGrid = grid,
+                   #preProcess = c("center", "scale"),
+                   tunelength = 10)
+LDA
+
+pred= predict(LDA, newdata = test)
+confusionMatrix(pred, test$id)
+```
+
+### Take one Sensor each time
+
+```{r}
+data = dailysport
+inTrain = createDataPartition(y = data$id, p = 0.7, list = FALSE)
+
+for (i in seq(2,8,3))  {
+  train = data[inTrain,c(1, i, i+1, i+2)]; 
+  test = data[-inTrain,c(1, i, i+1, i+2)]; 
+
+  # Control the training with 3 fold cross validation
+  trctrl = trainControl(method = "none", number = 3)
+  grid = expand.grid(C= seq(0.1, 1, 0.1))
+  LDA = train(id ~., data = train, method = "lda",
+                     trControl = trctrl,
+                     #tuneGrid = grid,
+                     #preProcess = c("center", "scale"),
+                     tunelength = 10)
+  print(LDA)
+  
+
+  pred= predict(LDA, newdata = test)
+  print(confusionMatrix(pred, test$id))
+  print("\n\n***************************************************\n\n" )
+ }
 ```
 
 
